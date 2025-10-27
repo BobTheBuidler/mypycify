@@ -1,0 +1,28 @@
+name: Test mypycify Action
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up minimal Python project
+        run: |
+          echo '[build-system]' > pyproject.toml
+          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
+          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
+          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
+          mkdir dummy
+          echo '' > dummy/__init__.py
+      - name: Run mypycify action
+        uses: ./ # Use local action for CI; replace with BobTheBuidler/mypycify@v0.0.1 for remote test
+        with:
+          python-version: '3.11'
+          pip-cache-dependency-path: pyproject.toml
+      - name: Check for built wheel
+        run: |
+          ls dist/
+          test -f dist/dummy-0.1-py3-none-any.whl
