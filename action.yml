@@ -72,7 +72,7 @@ runs:
         key: ${{ steps.artifact_name.outputs.artifact-name }}
 
     - name: Set ccache-dir variable
-      if: steps.wheel-cache.outputs.cache-hit != 'true'
+      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
           echo "CCACHE_DIR=$HOME/.cache/ccache" >> $GITHUB_ENV
@@ -91,13 +91,9 @@ runs:
       if: steps.wheel-cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
       run: brew install ccache
       shell: bash
-    - name: Install ccache on Windows
-      if: steps.wheel-cache.outputs.cache-hit != 'true' && runner.os == 'Windows'
-      run: choco install ccache --no-progress
-      shell: bash
 
     - name: Restore ccache cache
-      if: steps.wheel-cache.outputs.cache-hit != 'true'
+      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       uses: actions/cache/restore@v4
       with:
         path: ${{ env.CCACHE_DIR }}
@@ -125,7 +121,7 @@ runs:
       shell: bash
 
     - name: Save ccache cache
-      if: steps.wheel-cache.outputs.cache-hit != 'true'
+      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
         path: ${{ env.CCACHE_DIR }}
