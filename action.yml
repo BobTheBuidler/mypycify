@@ -61,7 +61,7 @@ runs:
       id: artifact_name
       shell: bash
       run: |
-        ARTIFACT_NAME="wheel-artifact-${{ runner.os }}-py${{ inputs.python-version }}-${{ steps.hash_key.outputs.hash-key }}"
+        ARTIFACT_NAME="BobTheBuidler/mypycify:wheel-artifact-${{ runner.os }}-py${{ inputs.python-version }}-${{ steps.hash_key.outputs.hash-key }}"
         echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
     - name: Cache built wheel (dist/)
