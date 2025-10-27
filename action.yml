@@ -33,22 +33,9 @@ runs:
 
     - name: Compute hash key
       id: hash_key
-      shell: bash
       run: |
-        # Support YAML list of strings ONLY (newline-separated)
-        IFS=$'\n' read -ra PARTS <<< "${{ inputs.hash-key }}"
-        HASH_KEY=""
-        for PART in "${PARTS[@]}"; do
-          PART_TRIMMED="$(echo "$PART" | xargs)"
-          if [ -n "$PART_TRIMMED" ]; then
-            if [ -z "$HASH_KEY" ]; then
-              HASH_KEY="${{ 'hashFiles(' }}$PART_TRIMMED${{ ')' }}"
-            else
-              HASH_KEY="$HASH_KEY-${{ 'hashFiles(' }}$PART_TRIMMED${{ ')' }}"
-            fi
-          fi
-        done
-        echo "hash-key=$HASH_KEY" >> $GITHUB_OUTPUT
+        echo "hash-key=${{ hashFiles(inputs.hash-key) }}" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Compute ccache key
       id: ccache_key
