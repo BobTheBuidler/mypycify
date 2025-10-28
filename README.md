@@ -29,9 +29,16 @@ Add this step to your workflow:
       **/*.h
     # Optional:
     # pip-cache-dependency-path: requirements.txt
+    # ccache: false  # Set to true to enable ccache for C/C++ compilation
 ```
 
 **Note:** The `hash-key` input must be provided as a multiline string (YAML block scalar), with one file glob per line. Do not use a YAML list or a comma-separated string—use the `|` syntax as shown above.
+
+> **Tip:**  
+> The `ccache` input controls whether ccache is used for C/C++ compilation (Linux/macOS only).  
+> - For small libraries, ccache installation can take 30–120 seconds and may outweigh the benefit, so disabling ccache is recommended for fast builds.  
+> - For larger libraries with significant C/C++ compilation, enabling ccache can greatly speed up repeated builds.  
+> - The default is `false`.
 
 ## Inputs
 
@@ -40,6 +47,7 @@ Add this step to your workflow:
 | python-version            | Python version to use (passed to actions/setup-python)                      | Yes      |         |
 | hash-key                  | File globs (multiline string, one per line) to include in the hash key for caching. | Yes      |         |
 | pip-cache-dependency-path | Dependency files for actions/setup-python pip cache                         | No       | ""      |
+| ccache                    | Enable ccache for C/C++ compilation (Linux/macOS only). See tip above.      | No       | false   |
 
 ## Outputs
 
@@ -72,6 +80,7 @@ jobs:
             **/*.c
             **/*.h
           # pip-cache-dependency-path: requirements.txt
+          # ccache: false  # Enable for large mypyc projects, disable for smaller projects
 ```
 
 ## License

@@ -1,6 +1,9 @@
 name: "Mypycify & Build Python Wheel"
 description: "Set up Python, restore ccache, build a wheel for the current OS and Python version, save ccache, and upload the wheel artifact. The built wheel is cached to speed up subsequent runs with the same code."
 inputs:
+  hash-key:
+    description: "File globs (YAML list of strings) to include in the hash key for caching. This input is required."
+    required: true
   python-version:
     description: "Python version to use (passed to actions/setup-python)"
     required: true
@@ -8,9 +11,10 @@ inputs:
     description: "Dependency files for actions/setup-python pip cache. This input is passed directly to the 'cache-dependency-path' parameter of actions/setup-python."
     required: false
     default: ""
-  hash-key:
-    description: "File globs (YAML list of strings) to include in the hash key for caching. This input is required."
-    required: true
+  ccache:
+    description: "Enable ccache for C/C++ compilation (Linux/macOS only). Default: false."
+    required: false
+    default: "false"
 outputs:
   artifact-name:
     description: "The name of the uploaded wheel artifact."
@@ -25,6 +29,7 @@ runs:
         cache-dependency-path: ${{ inputs.pip-cache-dependency-path }}
 
     - name: Compute ccache restore-key prefix
+      if: inputs.ccache == 'true' && runner.os != 'Windows'
       id: ccache_restore_key
       shell: bash
       run: |
@@ -38,6 +43,7 @@ runs:
       shell: bash
 
     - name: Compute ccache key
+      if: inputs.ccache == 'true' && runner.os != 'Windows'
       id: ccache_key
       shell: bash
       run: |
@@ -74,7 +80,7 @@ runs:
         key: ${{ steps.artifact_name.outputs.artifact-name }}
 
     - name: Set ccache-dir variable
-      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
+      if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       run: |
         if [ "$RUNNER_OS" = "Linux" ]; then
           echo "CCACHE_DIR=$HOME/.cache/ccache" >> $GITHUB_ENV
@@ -84,16 +90,16 @@ runs:
       shell: bash
 
     - name: Install ccache on Linux
-      if: steps.wheel-cache.outputs.cache-hit != 'true' && runner.os == 'Linux'
+      if: inputs.ccache == 'true' && steps.wheel-cache.outputs.cache-hit != 'true' && runner.os == 'Linux'
       run: sudo apt-get update && sudo apt-get install -y ccache
       shell: bash
     - name: Install ccache on macOS
-      if: steps.wheel-cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
+      if: inputs.ccache == 'true' && steps.wheel-cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
       run: brew install ccache
       shell: bash
 
     - name: Restore ccache cache
-      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
+      if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       uses: actions/cache/restore@v4
       with:
         path: ${{ env.CCACHE_DIR }}
@@ -101,7 +107,7 @@ runs:
         restore-keys: ${{ steps.ccache_restore_key.outputs.restore-key }}
 
     - name: Show ccache config before build
-      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
+      if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       run: |
         echo "ccache -- version && ccache -p"
         echo "==================== CCACHE CONFIG (BEFORE BUILD) ============================"
@@ -110,7 +116,7 @@ runs:
       shell: bash
 
     - name: Show ccache stats before build
-      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
+      if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       run: |
         echo "ccache -s"
         echo "==================== CCACHE STATS (BEFORE BUILD) ============================="
@@ -129,7 +135,7 @@ runs:
       shell: bash
 
     - name: Show ccache stats after build
-      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
+      if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       run: |
         echo "ccache -s"
         echo "==================== CCACHE STATS (AFTER BUILD) =============================="
@@ -138,7 +144,7 @@ runs:
       shell: bash
 
     - name: Save ccache cache
-      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
+      if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       uses: actions/cache/save@v4
       with:
         path: ${{ env.CCACHE_DIR }}
