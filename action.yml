@@ -103,15 +103,16 @@ runs:
     - name: Show ccache config before build
       if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       run: |
+        echo "ccache -- version && ccache -p"
         echo "==================== CCACHE CONFIG (BEFORE BUILD) ============================"
-        ccache --version
-        ccache -p
+        ccache --version && ccache -p
         echo "============================================================================="
       shell: bash
 
     - name: Show ccache stats before build
       if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       run: |
+        echo "ccache -s"
         echo "==================== CCACHE STATS (BEFORE BUILD) ============================="
         ccache -s
         echo "============================================================================="
@@ -130,6 +131,7 @@ runs:
     - name: Show ccache stats after build
       if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       run: |
+        echo "ccache -s"
         echo "==================== CCACHE STATS (AFTER BUILD) =============================="
         ccache -s
         echo "============================================================================="
