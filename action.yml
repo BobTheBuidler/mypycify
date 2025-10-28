@@ -34,14 +34,6 @@ runs:
         ARTIFACT_KEY="${{ runner.os }}-py${{ inputs.python-version }}-${{ steps.hash_key.outputs.hash-key }}"
         echo "artifact-key=$ARTIFACT_KEY" >> $GITHUB_OUTPUT
 
-    - name: Mutex (defer to existing runners per artifact key)
-      uses: softprops/turnstyle@v1
-      with:
-        poll-interval-seconds: 1
-        key: BobTheBuidler/mypycify:mutex-${{ steps.artifact_key.outputs.artifact-key }}
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
