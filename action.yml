@@ -85,7 +85,7 @@ runs:
       uses: actions/cache@v4
       with:
         path: dist/
-        key: ${{ steps.artifact_name.outputs.artifact-name }}
+        key: ${{ steps.artifact_key.outputs.artifact-key }}
 
     - name: Set ccache-dir variable
       if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
