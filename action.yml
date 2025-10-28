@@ -87,9 +87,21 @@ runs:
         key: ${{ steps.ccache_key.outputs.ccache-key }}
         restore-keys: ${{ steps.ccache_restore_key.outputs.restore-key }}
 
-    - name: Show ccache config and stats before build
-      if: steps.wheel-cache.outputs.cache-hit != 'true'
-      run: ccache --version && ccache -p -s
+    - name: Show ccache config before build
+      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
+      run: |
+        echo "==================== CCACHE CONFIG (BEFORE BUILD) ============================"
+        ccache --version
+        ccache -p
+        echo "============================================================================="
+      shell: bash
+
+    - name: Show ccache stats before build
+      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
+      run: |
+        echo "==================== CCACHE STATS (BEFORE BUILD) ============================="
+        ccache -s
+        echo "============================================================================="
       shell: bash
 
     - name: Build wheel
@@ -103,8 +115,11 @@ runs:
       shell: bash
 
     - name: Show ccache stats after build
-      if: steps.wheel-cache.outputs.cache-hit != 'true'
-      run: ccache -s
+      if: runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
+      run: |
+        echo "==================== CCACHE STATS (AFTER BUILD) =============================="
+        ccache -s
+        echo "============================================================================="
       shell: bash
 
     - name: Save ccache cache
