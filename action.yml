@@ -28,7 +28,7 @@ runs:
       id: ccache_restore_key
       shell: bash
       run: |
-        RESTORE_KEY="ccache-${{ runner.os }}-${{ inputs.python-version }}"
+        RESTORE_KEY="BobTheBuidler/mypycify:ccache-data-${{ runner.os }}-${{ inputs.python-version }}"
         echo "restore-key=$RESTORE_KEY" >> $GITHUB_OUTPUT
 
     - name: Compute hash key
@@ -54,7 +54,7 @@ runs:
       id: ccache_key
       shell: bash
       run: |
-        CCACHE_KEY="${{ steps.ccache_restore_key.outputs.restore-key }}-${{ hashFiles('pyproject.toml', '**/*.h', '**/*.c', 'faster_web3/**/*.py', 'faster_ens/**/*.py') }}"
+        CCACHE_KEY="${{ steps.ccache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}"
         echo "ccache-key=$CCACHE_KEY" >> $GITHUB_OUTPUT
 
     - name: Compute unique artifact name
