@@ -53,7 +53,7 @@ Add this step to your workflow:
 
 | Name          | Description                        |
 |---------------|------------------------------------|
-| artifact-name | The name of the uploaded artifact. |
+| artifact-name | The name of the uploaded artifact.  |
 
 ## Example Workflow
 
@@ -69,7 +69,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: BobTheBuidler/mypycify@v0.0.1
+      - id: mypycify
+        uses: BobTheBuidler/mypycify@v0.0.1
         with:
           python-version: '3.11'
           hash-key: |
@@ -81,6 +82,16 @@ jobs:
             **/*.h
           # pip-cache-dependency-path: requirements.txt
           # ccache: false  # Enable for large mypyc projects, disable for smaller projects
+      - name: Use artifact name
+        run: echo "Artifact name is ${{ steps.mypycify.outputs.artifact-name }}"
+```
+
+**How to get the artifact name after the step completes**
+
+Assign an `id` to the step using this action (e.g., `id: mypycify`). In subsequent steps, you can access the artifact name with:
+
+```yaml
+${{ steps.mypycify.outputs.artifact-name }}
 ```
 
 ## License
