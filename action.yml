@@ -21,6 +21,27 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Compute hash key
+      id: hash_key
+      run: |
+        echo "hash-key=${{ hashFiles(inputs.hash-key) }}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Compute unique artifact key
+      id: artifact_key
+      shell: bash
+      run: |
+        ARTIFACT_KEY="${{ runner.os }}-py${{ inputs.python-version }}-${{ steps.hash_key.outputs.hash-key }}"
+        echo "artifact-key=$ARTIFACT_KEY" >> $GITHUB_OUTPUT
+
+    - name: Mutex (defer to existing runners per artifact key)
+      uses: softprops/turnstyle@v1
+      with:
+        poll-interval-seconds: 1
+        key: BobTheBuidler/mypycify:mutex-${{ steps.artifact_key.outputs.artifact-key }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
@@ -35,12 +56,6 @@ runs:
       run: |
         RESTORE_KEY="BobTheBuidler/mypycify:ccache-data-${{ runner.os }}-${{ inputs.python-version }}"
         echo "restore-key=$RESTORE_KEY" >> $GITHUB_OUTPUT
-
-    - name: Compute hash key
-      id: hash_key
-      run: |
-        echo "hash-key=${{ hashFiles(inputs.hash-key) }}" >> $GITHUB_OUTPUT
-      shell: bash
 
     - name: Compute ccache key
       if: inputs.ccache == 'true' && runner.os != 'Windows'
@@ -64,13 +79,6 @@ runs:
         path: .mypy_cache
         key: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}
         restore-keys: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}
-
-    - name: Compute unique artifact name
-      id: artifact_name
-      shell: bash
-      run: |
-        ARTIFACT_NAME="BobTheBuidler_mypycified_wheel_${{ runner.os }}-py${{ inputs.python-version }}-${{ steps.hash_key.outputs.hash-key }}"
-        echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
     - name: Cache built wheel (dist/)
       id: wheel-cache
@@ -157,8 +165,15 @@ runs:
         path: .mypy_cache
         key: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}
 
+    - name: Compute unique artifact name
+      id: artifact_name
+      shell: bash
+      run: |
+        ARTIFACT_NAME="BobTheBuidler_mypycified_wheel-${{ steps.artifact_key.outputs.artifact-key }}"
+        echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+
     - name: Upload wheel artifact
       uses: actions/upload-artifact@v5
       with:
-        name: ${{ steps.artifact_name.outputs.artifact-name }}
+        name: BobTheBuidler_mypycified_wheel-${{ steps.artifact_name.outputs.artifact-name }}
         path: dist/*.whl
