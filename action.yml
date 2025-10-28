@@ -167,5 +167,5 @@ runs:
     - name: Upload wheel artifact
       uses: actions/upload-artifact@v5
       with:
-        name: BobTheBuidler_mypycified_wheel-${{ steps.artifact_name.outputs.artifact-name }}
+        name: ${{ steps.artifact_name.outputs.artifact-name }}
         path: dist/*.whl
