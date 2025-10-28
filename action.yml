@@ -44,6 +44,21 @@ runs:
         CCACHE_KEY="${{ steps.ccache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}"
         echo "ccache-key=$CCACHE_KEY" >> $GITHUB_OUTPUT
 
+    - name: Compute mypy cache restore-key prefix
+      id: mypy_cache_restore_key
+      shell: bash
+      run: |
+        MYPY_CACHE_PREFIX="BobTheBuidler/mypycify:mypy_cache-${{ runner.os }}-py${{ inputs.python-version }}"
+        echo "restore-key=$MYPY_CACHE_PREFIX" >> $GITHUB_OUTPUT
+
+    - name: Restore mypy cache
+      id: mypy_cache_restore
+      uses: actions/cache/restore@v4
+      with:
+        path: .mypy_cache
+        key: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}
+        restore-keys: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}
+
     - name: Compute unique artifact name
       id: artifact_name
       shell: bash
@@ -65,8 +80,6 @@ runs:
           echo "CCACHE_DIR=$HOME/.cache/ccache" >> $GITHUB_ENV
         elif [ "$RUNNER_OS" = "macOS" ]; then
           echo "CCACHE_DIR=$HOME/Library/Caches/ccache" >> $GITHUB_ENV
-        elif [ "$RUNNER_OS" = "Windows" ]; then
-          echo "CCACHE_DIR=$HOME/.cache/ccache" >> $GITHUB_ENV
         fi
       shell: bash
 
@@ -128,6 +141,13 @@ runs:
       with:
         path: ${{ env.CCACHE_DIR }}
         key: ${{ steps.ccache_key.outputs.ccache-key }}
+
+    - name: Save mypy cache
+      id: mypy_cache_save
+      uses: actions/cache/save@v4
+      with:
+        path: .mypy_cache
+        key: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}
 
     - name: Upload wheel artifact
       uses: actions/upload-artifact@v5
