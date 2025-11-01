@@ -28,6 +28,9 @@ Add this step to your workflow:
       my_lib/**/*.py
       **/*.c
       **/*.h
+    # Required for PR/branch linking:
+    trigger-pr-number: ${{ github.event.pull_request.number }}
+    trigger-branch-name: ${{ github.head_ref || github.ref_name }}
     # Optional:
     # pip-cache-dependency-path: requirements.txt
     # ccache: false  # Set to true to enable ccache for C/C++ compilation
@@ -35,6 +38,9 @@ Add this step to your workflow:
     # commit-message: "chore: update build artifacts"
     # normalize-source: false  # Set to true to normalize C files for diffchecking
 ```
+
+> **Note:**  
+> We need your help with the `trigger-pr-number` and `trigger-branch-name` fields because GitHub Actions does not automatically provide these values to composite actions. Please set them as shown above, even if the value is blank (e.g., `trigger-pr-number` on push events).
 
 **Note:** The `hash-key` input must be provided as a multiline string (YAML block scalar), with one file glob per line. Do not use a YAML list or a comma-separated string—use the `|` syntax as shown above.
 
@@ -55,6 +61,8 @@ Add this step to your workflow:
 | push-source       | Enable auto-commit and push or PR of changes if build output changes.       | No       | false   |
 | commit-message    | Commit message to use when committing changes.                              | No       | "chore: compile C files for source control" |
 | normalize-source  | Enable normalization of C files for diffchecking.                           | No       | false   |
+| trigger-pr-number | PR number of the triggering PR (e.g., 1234). If set, the PR body will include 'Triggered by #<number>'. | Yes | "" |
+| trigger-branch-name | Name of the triggering branch (e.g., feature/my-feature). Used in PR body if trigger-pr-number is not set. | Yes | "" |
 
 ## Outputs
 
@@ -70,6 +78,9 @@ If `push-source: true` is set and changes are detected after the build (and opti
 
 If `normalize-source: true` is set, normalization of C files for diffchecking will be performed before the commit/PR step.  
 **Note:** `normalize-source: true` requires `push-source: true`.
+
+If `trigger-pr-number` is set (e.g., `trigger-pr-number: ${{ github.event.pull_request.number }}`), the PR body will include a line like `Triggered by #1234` to reference the triggering PR.  
+If not, and `trigger-branch-name` is set, the PR body will include a line like `Triggered by branch: feature/my-feature`.
 
 ## Example Workflow
 
@@ -111,6 +122,8 @@ jobs:
           push-source: true
           commit-message: "chore: compile C files for source control"
           normalize-source: true
+          trigger-pr-number: ${{ github.event.pull_request.number }}
+          trigger-branch-name: ${{ github.head_ref || github.ref_name }}
 ```
 
 **How to get the artifact name after the step completes**
