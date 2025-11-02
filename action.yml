@@ -221,7 +221,6 @@ runs:
     - name: Check for changes
       id: check_changes
       run: |
-        git fetch origin
         git add .
         if git diff --cached --quiet; then
           echo "changed=false" >> $GITHUB_OUTPUT
