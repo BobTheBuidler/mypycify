@@ -1,5 +1,6 @@
 name: "Mypycify & Build Python Wheel"
 description: "Set up Python, restore ccache, build a wheel for the current OS and Python version, save ccache, upload the wheel artifact, and optionally normalize C files and commit/push or open a PR with changes."
+icon: package
 inputs:
   hash-key:
     description: "File globs (YAML list of strings) to include in the hash key for caching. This input is required."
