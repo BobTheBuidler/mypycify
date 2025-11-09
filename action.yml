@@ -37,6 +37,10 @@ inputs:
     description: "Optional: Name of the triggering branch (e.g., feature/my-feature). Used in PR body if trigger-pr-number is not set."
     required: false
     default: ""
+  build-command:
+    description: "Custom build command to run (default: 'python -m build --wheel'). If you use a custom command, you are responsible for ensuring all requirements are installed before mypycify or as part of the build command."
+    required: false
+    default: "python -m build --wheel"
 outputs:
   artifact-name:
     description: "The name of the uploaded wheel artifact."
@@ -154,22 +158,26 @@ runs:
       shell: bash
 
     - name: Install build dependencies
-      if: steps.wheel-cache.outputs.cache-hit != 'true'
+      if: steps.wheel-cache.outputs.cache-hit != 'true' && inputs.build-command == 'python -m build --wheel'
       run: |
         python -m pip install --upgrade pip
         python -m pip install --upgrade build
       shell: bash
-        
+
     - name: Build wheel (with ccache)
       if: inputs.ccache == 'true' && steps.wheel-cache.outputs.cache-hit != 'true'
       env:
         CC: ccache gcc
-      run: python -m build --wheel
+      run: |
+        echo "Running build command: ${{ inputs.build-command }}"
+        eval "${{ inputs.build-command }}"
       shell: bash
 
     - name: Build wheel (without ccache)
       if: inputs.ccache != 'true' && steps.wheel-cache.outputs.cache-hit != 'true'
-      run: python -m build --wheel
+      run: |
+        echo "Running build command: ${{ inputs.build-command }}"
+        eval "${{ inputs.build-command }}"
       shell: bash
 
     - name: Show ccache stats after build
