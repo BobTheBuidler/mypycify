@@ -231,9 +231,23 @@ runs:
         fi
       shell: bash
 
-    # Only allow direct commit if this is a push event to a branch in the main repository.
+    - name: Check if branch still exists on remote
+      if: inputs.push-source == 'true' && steps.check_changes.outputs.changed == 'true'
+      id: branch_exists
+      shell: bash
+      run: |
+        BRANCH_NAME="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+        if git ls-remote --exit-code --heads origin "$BRANCH_NAME"; then
+          echo "branch_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "branch_exists=false" >> $GITHUB_OUTPUT
+          echo "The branch $BRANCH_NAME no longer exists on GitHub. Exiting gracefully (xfail-at-checkout=true)."
+          exit 0
+        fi
+
+    # Only allow direct commit if this is a push event to a branch in the main repository and branch still exists.
     - name: Commit and push changes (if possible)
-      if: inputs.push-source == 'true' && steps.check_changes.outputs.changed == 'true' && github.event_name == 'push'
+      if: inputs.push-source == 'true' && steps.check_changes.outputs.changed == 'true' && github.event_name == 'push' && steps.branch_exists.outputs.branch_exists == 'true'
       run: |
         git config --local user.name "github-actions[bot]"
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -241,9 +255,9 @@ runs:
         git push
       shell: bash
 
-    # Otherwise, always create a PR for changes.
+    # Otherwise, create a PR for changes if branch still exists.
     - name: Create Pull Request
-      if: inputs.push-source == 'true' && steps.check_changes.outputs.changed == 'true' && github.event_name != 'push'
+      if: inputs.push-source == 'true' && steps.check_changes.outputs.changed == 'true' && github.event_name != 'push' && steps.branch_exists.outputs.branch_exists == 'true'
       uses: peter-evans/create-pull-request@v7
       with:
         branch: auto/update-mypycify
