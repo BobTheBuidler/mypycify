@@ -62,8 +62,8 @@ Add this step to your workflow:
 | push-source       | Enable auto-commit and push or PR of changes if build output changes.       | No       | false   |
 | commit-message    | Commit message to use when committing changes.                              | No       | "chore: compile C files for source control" |
 | normalize-source  | Enable normalization of C files for diffchecking.                           | No       | false   |
-| trigger-pr-number | PR number of the triggering PR (e.g., 1234). If set, the PR body will include 'Triggered by #<number>'. | Yes | "" |
-| trigger-branch-name | Name of the triggering branch (e.g., feature/my-feature). Used in PR body if trigger-pr-number is not set. | Yes | "" |
+| trigger-pr-number | PR number of the triggering PR (e.g., 1234). If set, the PR body will include 'Triggered by #<number>'. | No | "" |
+| trigger-branch-name | Name of the triggering branch (e.g., feature/my-feature). Used in PR body if trigger-pr-number is not set. | No | "" |
 | build-command     | Custom build command to run (default: 'python -m build --wheel'). **If you use a custom command, you are responsible for ensuring all requirements are installed before mypycify or as part of the build command.** | No | "python -m build --wheel" |
 | build-from        | Where to build the wheel from. Allowed values: `source` (default), `sdist`. | No | source |
 
@@ -141,6 +141,43 @@ If `normalize-source: true` is set, normalization of C files for diffchecking wi
 
 If `trigger-pr-number` is set (e.g., `trigger-pr-number: ${{ github.event.pull_request.number }}`), the PR body will include a line like `Triggered by #1234` to reference the triggering PR.  
 If not, and `trigger-branch-name` is set, the PR body will include a line like `Triggered by branch: feature/my-feature`.
+
+## Input Validation and Troubleshooting
+
+This action performs comprehensive input validation and will fail early with a clear error message if any input is invalid or if any required combination is not met.
+
+### Validation Rules
+
+- **Required inputs:**  
+  - `python-version` and `hash-key` must be provided and non-empty.
+
+- **Allowed values:**  
+  - `build-from`: must be "source" or "sdist".
+  - `ccache`, `push-source`, `normalize-source`: must be "true" or "false".
+
+- **Combinations:**  
+  - If `normalize-source: true`, then `push-source` must also be "true".
+  - If `push-source: true`, at least one of `trigger-pr-number` or `trigger-branch-name` must be set (non-empty).
+  - Both `trigger-pr-number` and `trigger-branch-name` can be set; the action will use `trigger-pr-number` if available, otherwise `trigger-branch-name`.
+  - `build-command` must be a non-empty string if provided.
+
+- **Error messages:**  
+  - Each validation failure prints a clear, actionable error message indicating which input or combination is invalid.
+
+### Example Error Messages
+
+- `ERROR: build-from must be 'source' or 'sdist'. Got 'foo'.`
+- `ERROR: ccache must be 'true' or 'false'. Got 'maybe'.`
+- `ERROR: python-version is required.`
+- `ERROR: normalize-source cannot be true unless push-source is also true.`
+- `ERROR: push-source is true, but neither trigger-pr-number nor trigger-branch-name is set. At least one is required for PR/commit automation.`
+
+### Troubleshooting
+
+- Double-check all input values for typos or unsupported values.
+- If enabling `push-source`, always provide at least one of `trigger-pr-number` or `trigger-branch-name`.
+- If using `normalize-source: true`, ensure `push-source` is also set to `true`.
+- If you see a validation error, read the message carefully—it will tell you exactly what to fix.
 
 ## Outputs
 

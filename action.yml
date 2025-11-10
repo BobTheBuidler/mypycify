@@ -53,12 +53,49 @@ runs:
   steps:
     - name: Validate inputs
       run: |
+        set -e
+        # Validate required inputs
+        if [[ -z "${{ inputs.python-version }}" ]]; then
+          echo "ERROR: python-version is required."
+          exit 1
+        fi
+        if [[ -z "${{ inputs.hash-key }}" ]]; then
+          echo "ERROR: hash-key is required."
+          exit 1
+        fi
+        # Validate build-from
         if [[ "${{ inputs.build-from }}" != "source" && "${{ inputs.build-from }}" != "sdist" ]]; then
           echo "ERROR: build-from must be 'source' or 'sdist'. Got '${{ inputs.build-from }}'."
           exit 1
         fi
+        # Validate ccache
+        if [[ "${{ inputs.ccache }}" != "true" && "${{ inputs.ccache }}" != "false" ]]; then
+          echo "ERROR: ccache must be 'true' or 'false'. Got '${{ inputs.ccache }}'."
+          exit 1
+        fi
+        # Validate push-source
+        if [[ "${{ inputs.push-source }}" != "true" && "${{ inputs.push-source }}" != "false" ]]; then
+          echo "ERROR: push-source must be 'true' or 'false'. Got '${{ inputs.push-source }}'."
+          exit 1
+        fi
+        # Validate normalize-source
+        if [[ "${{ inputs.normalize-source }}" != "true" && "${{ inputs.normalize-source }}" != "false" ]]; then
+          echo "ERROR: normalize-source must be 'true' or 'false'. Got '${{ inputs.normalize-source }}'."
+          exit 1
+        fi
+        # Validate build-command
+        if [[ -n "${{ inputs.build-command }}" && -z "$(echo "${{ inputs.build-command }}" | xargs)" ]]; then
+          echo "ERROR: build-command must be a non-empty string if provided."
+          exit 1
+        fi
+        # Combination: normalize-source requires push-source
         if [[ "${{ inputs.normalize-source }}" == "true" && "${{ inputs.push-source }}" != "true" ]]; then
           echo "ERROR: normalize-source cannot be true unless push-source is also true."
+          exit 1
+        fi
+        # Combination: push-source requires at least one trigger
+        if [[ "${{ inputs.push-source }}" == "true" && -z "${{ inputs.trigger-pr-number }}" && -z "${{ inputs.trigger-branch-name }}" ]]; then
+          echo "ERROR: push-source is true, but neither trigger-pr-number nor trigger-branch-name is set. At least one is required for PR/commit automation."
           exit 1
         fi
       shell: bash
