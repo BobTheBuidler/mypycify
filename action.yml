@@ -49,15 +49,12 @@ runs:
   steps:
     - name: Validate inputs
       if: inputs.normalize-source == 'true' && inputs.push-source != 'true'
-      run: |
-        echo "ERROR: normalize-source cannot be true unless push-source is also true."
-        exit 1
+      run: echo "ERROR: normalize-source cannot be true unless push-source is also true." && exit 1
       shell: bash
 
     - name: Compute hash key
       id: hash_key
-      run: |
-        echo "hash-key=${{ hashFiles(inputs.hash-key) }}" >> $GITHUB_OUTPUT
+      run: echo "hash-key=${{ hashFiles(inputs.hash-key) }}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Compute unique artifact key
@@ -67,7 +64,15 @@ runs:
         ARTIFACT_KEY="${{ runner.os }}-py${{ inputs.python-version }}-${{ steps.hash_key.outputs.hash-key }}"
         echo "artifact-key=$ARTIFACT_KEY" >> $GITHUB_OUTPUT
 
+    - name: Cache built wheel (dist/)
+      id: wheel-cache
+      uses: actions/cache@v4
+      with:
+        path: dist/
+        key: ${{ steps.artifact_key.outputs.artifact-key }}
+
     - name: Set up Python
+      if: steps.wheel-cache.outputs.cache-hit != 'true'
       uses: actions/setup-python@v6
       with:
         python-version: ${{ inputs.python-version }}
@@ -75,7 +80,7 @@ runs:
         cache-dependency-path: ${{ inputs.pip-cache-dependency-path }}
 
     - name: Compute ccache restore-key prefix
-      if: inputs.ccache == 'true' && runner.os != 'Windows'
+      if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       id: ccache_restore_key
       shell: bash
       run: |
@@ -83,7 +88,7 @@ runs:
         echo "restore-key=$RESTORE_KEY" >> $GITHUB_OUTPUT
 
     - name: Compute ccache key
-      if: inputs.ccache == 'true' && runner.os != 'Windows'
+      if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
       id: ccache_key
       shell: bash
       run: |
@@ -92,6 +97,7 @@ runs:
 
     - name: Compute mypy cache restore-key prefix
       id: mypy_cache_restore_key
+      if: steps.wheel-cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
         MYPY_CACHE_PREFIX="BobTheBuidler/mypycify:mypy_cache-${{ runner.os }}-py${{ inputs.python-version }}"
@@ -99,18 +105,12 @@ runs:
 
     - name: Restore mypy cache
       id: mypy_cache_restore
+      if: steps.wheel-cache.outputs.cache-hit != 'true'
       uses: actions/cache/restore@v4
       with:
         path: .mypy_cache
         key: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}
         restore-keys: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}
-
-    - name: Cache built wheel (dist/)
-      id: wheel-cache
-      uses: actions/cache@v4
-      with:
-        path: dist/
-        key: ${{ steps.artifact_key.outputs.artifact-key }}
 
     - name: Set ccache-dir variable
       if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
