@@ -152,3 +152,107 @@ jobs:
         run: |
           ls dist/
           test -f dist/dummy-0.1-py3-none-any.whl
+
+  test-invalid-build-from:
+    name: Invalid build-from value
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up minimal Python project
+        run: |
+          echo '[build-system]' > pyproject.toml
+          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
+          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
+          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
+          mkdir dummy
+          echo '' > dummy/__init__.py
+      - name: Run mypycify action (invalid build-from)
+        uses: ./
+        with:
+          python-version: '3.11'
+          hash-key: pyproject.toml
+          build-from: foo
+
+  test-invalid-ccache:
+    name: Invalid ccache value
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up minimal Python project
+        run: |
+          echo '[build-system]' > pyproject.toml
+          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
+          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
+          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
+          mkdir dummy
+          echo '' > dummy/__init__.py
+      - name: Run mypycify action (invalid ccache)
+        uses: ./
+        with:
+          python-version: '3.11'
+          hash-key: pyproject.toml
+          ccache: maybe
+
+  test-missing-python-version:
+    name: Missing python-version
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up minimal Python project
+        run: |
+          echo '[build-system]' > pyproject.toml
+          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
+          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
+          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
+          mkdir dummy
+          echo '' > dummy/__init__.py
+      - name: Run mypycify action (missing python-version)
+        uses: ./
+        with:
+          hash-key: pyproject.toml
+
+  test-normalize-without-push:
+    name: normalize-source true without push-source true
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up minimal Python project
+        run: |
+          echo '[build-system]' > pyproject.toml
+          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
+          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
+          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
+          mkdir dummy
+          echo '' > dummy/__init__.py
+      - name: Run mypycify action (normalize-source true, push-source false)
+        uses: ./
+        with:
+          python-version: '3.11'
+          hash-key: pyproject.toml
+          normalize-source: true
+          push-source: false
+
+  test-push-source-missing-triggers:
+    name: push-source true with no trigger-pr-number or trigger-branch-name
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up minimal Python project
+        run: |
+          echo '[build-system]' > pyproject.toml
+          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
+          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
+          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
+          mkdir dummy
+          echo '' > dummy/__init__.py
+      - name: Run mypycify action (push-source true, missing triggers)
+        uses: ./
+        with:
+          python-version: '3.11'
+          hash-key: pyproject.toml
+          push-source: true
