@@ -5,6 +5,30 @@ on:
   pull_request:
 
 jobs:
+  test-default:
+    name: Build (no ccache)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up minimal Python project
+        run: |
+          echo '[build-system]' > pyproject.toml
+          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
+          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
+          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
+          mkdir dummy
+          echo '' > dummy/__init__.py
+      - name: Run mypycify action (source, no ccache)
+        uses: ./
+        with:
+          python-version: '3.11'
+          pip-cache-dependency-path: pyproject.toml
+          ccache: 'false'
+      - name: Check for built wheel
+        run: |
+          ls dist/
+          test -f dist/dummy-0.1-py3-none-any.whl
+      
   test-source:
     name: Build from source (no ccache)
     runs-on: ubuntu-latest
@@ -50,6 +74,30 @@ jobs:
           pip-cache-dependency-path: pyproject.toml
           build-from: sdist
           ccache: 'false'
+      - name: Check for built wheel
+        run: |
+          ls dist/
+          test -f dist/dummy-0.1-py3-none-any.whl
+
+  test-default-ccache:
+    name: Build (with ccache)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up minimal Python project
+        run: |
+          echo '[build-system]' > pyproject.toml
+          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
+          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
+          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
+          mkdir dummy
+          echo '' > dummy/__init__.py
+      - name: Run mypycify action (source, with ccache)
+        uses: ./
+        with:
+          python-version: '3.11'
+          pip-cache-dependency-path: pyproject.toml
+          ccache: 'true'
       - name: Check for built wheel
         run: |
           ls dist/
