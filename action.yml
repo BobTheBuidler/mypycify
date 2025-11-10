@@ -173,6 +173,22 @@ runs:
         python -m pip install --upgrade build
       shell: bash
 
+    - name: Build wheel from source (with ccache)
+      if: inputs.ccache == 'true' && steps.wheel-cache.outputs.cache-hit != 'true' && inputs.build-from == 'source'
+      env:
+        CC: ccache gcc
+      run: |
+        echo "Running build command: ${{ inputs.build-command }}"
+        eval "${{ inputs.build-command }}"
+      shell: bash
+
+    - name: Build wheel from source (without ccache)
+      if: inputs.ccache != 'true' && steps.wheel-cache.outputs.cache-hit != 'true' && inputs.build-from == 'source'
+      run: |
+        echo "Running build command: ${{ inputs.build-command }}"
+        eval "${{ inputs.build-command }}"
+      shell: bash
+
     - name: Build wheel from sdist (with ccache)
       if: steps.wheel-cache.outputs.cache-hit != 'true' && inputs.build-from == 'sdist' && inputs.ccache == 'true'
       env:
@@ -203,22 +219,6 @@ runs:
         cp dist/*.whl ../dist/
         cd ..
         rm -rf tmp_sdist_extract
-      shell: bash
-
-    - name: Build wheel (with ccache)
-      if: inputs.ccache == 'true' && steps.wheel-cache.outputs.cache-hit != 'true' && inputs.build-from == 'source'
-      env:
-        CC: ccache gcc
-      run: |
-        echo "Running build command: ${{ inputs.build-command }}"
-        eval "${{ inputs.build-command }}"
-      shell: bash
-
-    - name: Build wheel (without ccache)
-      if: inputs.ccache != 'true' && steps.wheel-cache.outputs.cache-hit != 'true' && inputs.build-from == 'source'
-      run: |
-        echo "Running build command: ${{ inputs.build-command }}"
-        eval "${{ inputs.build-command }}"
       shell: bash
 
     - name: Show ccache stats after build
