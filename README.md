@@ -11,8 +11,8 @@
 
 ## Caching strategies
 
-- **Wheel artifact caching:** The built wheel (`dist/*.whl`) is cached using a unique key based on the OS, Python version, and a hash of user-specified files. If the cache is hit, the build is skipped and the cached wheel is used.
-- **ccache compiler cache:** The C/C++ compiler cache is restored and saved using a key that includes the OS, Python version, and a hash of relevant source files. This speeds up builds that involve native extensions.
+- **Wheel artifact caching:** The built wheel (`dist/*.whl`) is cached using a unique key based on the OS, Python version, build-from mode, and a hash of user-specified files. If the cache is hit, the build is skipped and the cached wheel is used.
+- **ccache compiler cache:** The C/C++ compiler cache is restored and saved using a key that includes the OS, Python version, build-from mode, and a hash of relevant source files. This speeds up builds that involve native extensions.
 - **Dependency caching:** Optionally, pip dependencies can be cached by specifying `pip-cache-dependency-path`.
 
 ## Usage
@@ -28,16 +28,16 @@ Add this step to your workflow:
       my_lib/**/*.py
       **/*.c
       **/*.h
-    # Required for PR/branch linking:
-    trigger-pr-number: ${{ github.event.pull_request.number }}
-    trigger-branch-name: ${{ github.head_ref || github.ref_name }}
     # Optional:
+    build-from: source  # or 'sdist' to build from the sdist (see below)
     # pip-cache-dependency-path: requirements.txt
     # ccache: false  # Set to true to enable ccache for C/C++ compilation
     # push-source: false  # Set to true to enable commit/PR automation
     # commit-message: "chore: update build artifacts"
     # normalize-source: false  # Set to true to normalize C files for diffchecking
     # build-command: "make mypyc"  # Use a custom build command instead of the default
+    # trigger-pr-number: ${{ github.event.pull_request.number }}
+    # trigger-branch-name: ${{ github.head_ref || github.ref_name }}
 ```
 
 > **Note:**  
@@ -65,6 +65,40 @@ Add this step to your workflow:
 | trigger-pr-number | PR number of the triggering PR (e.g., 1234). If set, the PR body will include 'Triggered by #<number>'. | Yes | "" |
 | trigger-branch-name | Name of the triggering branch (e.g., feature/my-feature). Used in PR body if trigger-pr-number is not set. | Yes | "" |
 | build-command     | Custom build command to run (default: 'python -m build --wheel'). **If you use a custom command, you are responsible for ensuring all requirements are installed before mypycify or as part of the build command.** | No | "python -m build --wheel" |
+| build-from        | Where to build the wheel from. Allowed values: `source` (default), `sdist`. | No | source |
+
+## Build Modes: `build-from: source` vs `build-from: sdist`
+
+- **build-from: source** (default):  
+  The wheel is built directly from the source tree. This is the standard mode for most CI builds and is fastest for local development and PR validation.
+
+- **build-from: sdist**:  
+  The action first builds a source distribution (sdist), extracts it, and then builds the wheel from the extracted sdist.  
+  This mode is critical for validating that your sdist contains all necessary files and that the package can be built and installed exactly as it will be from PyPI.  
+  Use this mode to catch packaging issues (e.g., missing files in MANIFEST.in) and to ensure reproducibility of your published artifacts.
+
+**All other user inputs (e.g., build-command, ccache, pip-cache-dependency-path, etc.) are honored in both modes.**
+
+### Example: Build from sdist
+
+```yaml
+- uses: BobTheBuidler/mypycify@v0.0.1
+  with:
+    python-version: '3.11'
+    hash-key: |
+      pyproject.toml
+      my_lib/**/*.py
+      **/*.c
+      **/*.h
+    build-from: sdist
+    ccache: true
+```
+
+### When to use `build-from: sdist`
+
+- When you want to validate your packaging before release.
+- When you have had issues with missing files or broken wheels on PyPI.
+- As part of a release or nightly workflow to ensure your sdist is always valid.
 
 ## Custom Build Commands
 
@@ -80,6 +114,7 @@ If your project requires a custom build step (for example, using a Makefile or a
       **/*.c
       **/*.h
     build-command: "make mypyc"
+    build-from: sdist
 ```
 
 **Important:**  
@@ -133,7 +168,7 @@ jobs:
       - name: Drop existing build files
         run: rm -rf build
 
-      - name: Build, normalize, and push/PR C files
+      - name: Build, normalize, and push/PR C files (from sdist)
         uses: BobTheBuidler/mypycify@master
         with:
           python-version: "3.14"
@@ -155,6 +190,7 @@ jobs:
           normalize-source: true
           trigger-pr-number: ${{ github.event.pull_request.number }}
           trigger-branch-name: ${{ github.head_ref || github.ref_name }}
+          build-from: sdist
           # build-command: "make mypyc"  # Example custom build command
 ```
 
@@ -168,4 +204,4 @@ ${{ steps.mypycify.outputs.artifact-name }}
 
 ## License
 
-MIT (or specify your license)
+MIT
