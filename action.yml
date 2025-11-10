@@ -49,7 +49,9 @@ runs:
   steps:
     - name: Validate inputs
       if: inputs.normalize-source == 'true' && inputs.push-source != 'true'
-      run: echo "ERROR: normalize-source cannot be true unless push-source is also true." && exit 1
+      run: |
+        echo "ERROR: normalize-source cannot be true unless push-source is also true."
+        exit 1
       shell: bash
 
     - name: Compute hash key
