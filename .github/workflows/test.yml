@@ -1,8 +1,12 @@
 name: Test mypycify Action
 
 on:
-  push:
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-default:
@@ -24,6 +28,7 @@ jobs:
           python-version: '3.11'
           pip-cache-dependency-path: pyproject.toml
           ccache: 'false'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -49,6 +54,7 @@ jobs:
           pip-cache-dependency-path: pyproject.toml
           build-from: source
           ccache: 'false'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -74,6 +80,7 @@ jobs:
           pip-cache-dependency-path: pyproject.toml
           build-from: sdist
           ccache: 'false'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -98,6 +105,7 @@ jobs:
           python-version: '3.11'
           pip-cache-dependency-path: pyproject.toml
           ccache: 'true'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -123,6 +131,7 @@ jobs:
           pip-cache-dependency-path: pyproject.toml
           build-from: source
           ccache: 'true'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -148,6 +157,7 @@ jobs:
           pip-cache-dependency-path: pyproject.toml
           build-from: sdist
           ccache: 'true'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
