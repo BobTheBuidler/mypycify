@@ -113,7 +113,7 @@ runs:
         echo "artifact-key=$ARTIFACT_KEY" >> $GITHUB_OUTPUT
 
     - name: Mutex on artifact key
-      uses: softprops/turnstyle@v1
+      uses: softprops/turnstyle@v3
       with:
         poll-interval-seconds: 10
       env:
