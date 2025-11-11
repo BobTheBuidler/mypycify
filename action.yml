@@ -299,10 +299,34 @@ runs:
         echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
     - name: Upload wheel artifact
+      id: upload_artifact
       uses: actions/upload-artifact@v5
       with:
         name: ${{ steps.artifact_name.outputs.artifact-name }}
         path: dist/*.whl
+      continue-on-error: true
+
+    - name: Delete dist/ after upload
+      if: steps.upload_artifact.outcome == 'failure'
+      run: rm -rf dist/
+
+    - name: Download wheel artifact
+      if: steps.upload_artifact.outcome == 'failure'
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ steps.artifact_name.outputs.artifact-name }}
+        path: downloaded_artifact
+
+    - name: Validate downloaded artifact
+      if: steps.upload_artifact.outcome == 'failure'
+      run: |
+        if [ "$(ls -1 downloaded_artifact/*.whl 2>/dev/null | wc -l)" -eq 1 ]; then
+          echo "Artifact downloaded and validated."
+          exit 0
+        else
+          echo "Artifact not found or multiple artifacts found."
+          exit 1
+        fi
 
     - name: Normalize C files for diffchecking
       if: inputs.normalize-source == 'true'
