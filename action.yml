@@ -112,6 +112,14 @@ runs:
         ARTIFACT_KEY="${{ runner.os }}-py${{ inputs.python-version }}-${{ inputs.build-from }}-${{ steps.hash_key.outputs.hash-key }}"
         echo "artifact-key=$ARTIFACT_KEY" >> $GITHUB_OUTPUT
 
+    - name: Mutex on artifact key
+      uses: softprops/turnstyle@v1
+      with:
+        poll-interval-seconds: 10
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        TURNSTYLE_LOCK_KEY: ${{ steps.artifact_key.outputs.artifact-key }}
+
     - name: Cache built wheel (dist/)
       id: wheel-cache
       uses: actions/cache@v4
@@ -291,10 +299,36 @@ runs:
         echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
     - name: Upload wheel artifact
+      id: upload_artifact
       uses: actions/upload-artifact@v5
       with:
         name: ${{ steps.artifact_name.outputs.artifact-name }}
         path: dist/*.whl
+      continue-on-error: true
+
+    - name: Delete dist/ after upload
+      if: steps.upload_artifact.outcome == 'failure'
+      shell: bash
+      run: rm -rf dist/
+
+    - name: Download wheel artifact
+      if: steps.upload_artifact.outcome == 'failure'
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ steps.artifact_name.outputs.artifact-name }}
+        path: dist
+
+    - name: Validate downloaded artifact
+      if: steps.upload_artifact.outcome == 'failure'
+      shell: bash
+      run: |
+        if [ "$(ls -1 dist/*.whl 2>/dev/null | wc -l)" -eq 1 ]; then
+          echo "Artifact downloaded and validated."
+          exit 0
+        else
+          echo "Artifact not found or multiple artifacts found."
+          exit 1
+        fi
 
     - name: Normalize C files for diffchecking
       if: inputs.normalize-source == 'true'
