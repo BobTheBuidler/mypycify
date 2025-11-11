@@ -308,6 +308,7 @@ runs:
 
     - name: Delete dist/ after upload
       if: steps.upload_artifact.outcome == 'failure'
+      shell: bash
       run: rm -rf dist/
 
     - name: Download wheel artifact
@@ -319,6 +320,7 @@ runs:
 
     - name: Validate downloaded artifact
       if: steps.upload_artifact.outcome == 'failure'
+      shell: bash
       run: |
         if [ "$(ls -1 downloaded_artifact/*.whl 2>/dev/null | wc -l)" -eq 1 ]; then
           echo "Artifact downloaded and validated."
