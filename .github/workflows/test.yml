@@ -24,6 +24,7 @@ jobs:
           python-version: '3.11'
           pip-cache-dependency-path: pyproject.toml
           ccache: 'false'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -49,6 +50,7 @@ jobs:
           pip-cache-dependency-path: pyproject.toml
           build-from: source
           ccache: 'false'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -74,6 +76,7 @@ jobs:
           pip-cache-dependency-path: pyproject.toml
           build-from: sdist
           ccache: 'false'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -98,6 +101,7 @@ jobs:
           python-version: '3.11'
           pip-cache-dependency-path: pyproject.toml
           ccache: 'true'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -123,6 +127,7 @@ jobs:
           pip-cache-dependency-path: pyproject.toml
           build-from: source
           ccache: 'true'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -148,6 +153,7 @@ jobs:
           pip-cache-dependency-path: pyproject.toml
           build-from: sdist
           ccache: 'true'
+          hash-key: pyproject.toml
       - name: Check for built wheel
         run: |
           ls dist/
@@ -306,3 +312,25 @@ jobs:
             echo "Action did not fail as expected."
             exit 1
           fi
+
+</final_file_content>
+
+IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
+
+<environment_details>
+# Visual Studio Code Visible Files
+.github/workflows/test.yml
+
+# Visual Studio Code Open Tabs
+action.yml
+.github/workflows/test.yml
+
+# Current Time
+11/11/2025, 12:12:19 PM (UTC, UTC+0:00)
+
+# Context Window Usage
+70,563 / 1,047.576K tokens used (7%)
+
+# Current Mode
+ACT MODE
+</environment_details>
