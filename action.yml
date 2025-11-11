@@ -112,6 +112,14 @@ runs:
         ARTIFACT_KEY="${{ runner.os }}-py${{ inputs.python-version }}-${{ inputs.build-from }}-${{ steps.hash_key.outputs.hash-key }}"
         echo "artifact-key=$ARTIFACT_KEY" >> $GITHUB_OUTPUT
 
+    - name: Mutex on artifact key
+      uses: softprops/turnstyle@v1
+      with:
+        poll-interval-seconds: 10
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        TURNSTYLE_LOCK_KEY: ${{ steps.artifact_key.outputs.artifact-key }}
+
     - name: Cache built wheel (dist/)
       id: wheel-cache
       uses: actions/cache@v4
