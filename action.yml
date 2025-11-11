@@ -316,13 +316,13 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: ${{ steps.artifact_name.outputs.artifact-name }}
-        path: downloaded_artifact
+        path: dist
 
     - name: Validate downloaded artifact
       if: steps.upload_artifact.outcome == 'failure'
       shell: bash
       run: |
-        if [ "$(ls -1 downloaded_artifact/*.whl 2>/dev/null | wc -l)" -eq 1 ]; then
+        if [ "$(ls -1 dist/*.whl 2>/dev/null | wc -l)" -eq 1 ]; then
           echo "Artifact downloaded and validated."
           exit 0
         else
