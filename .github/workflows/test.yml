@@ -156,7 +156,6 @@ jobs:
   test-invalid-build-from:
     name: Invalid build-from value
     runs-on: ubuntu-latest
-    continue-on-error: false
     steps:
       - uses: actions/checkout@v4
       - name: Set up minimal Python project
@@ -168,16 +167,26 @@ jobs:
           mkdir dummy
           echo '' > dummy/__init__.py
       - name: Run mypycify action (invalid build-from)
+        id: mypycify
         uses: ./
         with:
           python-version: '3.11'
           hash-key: pyproject.toml
           build-from: foo
+        continue-on-error: true
+      - name: Assert action failed as expected
+        run: |
+          if [ "${{ steps.mypycify.outcome }}" = "failure" ]; then
+            echo "Action failed as expected."
+            exit 0
+          else
+            echo "Action did not fail as expected."
+            exit 1
+          fi
 
   test-invalid-ccache:
     name: Invalid ccache value
     runs-on: ubuntu-latest
-    continue-on-error: false
     steps:
       - uses: actions/checkout@v4
       - name: Set up minimal Python project
@@ -189,16 +198,26 @@ jobs:
           mkdir dummy
           echo '' > dummy/__init__.py
       - name: Run mypycify action (invalid ccache)
+        id: mypycify
         uses: ./
         with:
           python-version: '3.11'
           hash-key: pyproject.toml
           ccache: maybe
+        continue-on-error: true
+      - name: Assert action failed as expected
+        run: |
+          if [ "${{ steps.mypycify.outcome }}" = "failure" ]; then
+            echo "Action failed as expected."
+            exit 0
+          else
+            echo "Action did not fail as expected."
+            exit 1
+          fi
 
   test-missing-python-version:
     name: Missing python-version
     runs-on: ubuntu-latest
-    continue-on-error: false
     steps:
       - uses: actions/checkout@v4
       - name: Set up minimal Python project
@@ -210,14 +229,24 @@ jobs:
           mkdir dummy
           echo '' > dummy/__init__.py
       - name: Run mypycify action (missing python-version)
+        id: mypycify
         uses: ./
         with:
           hash-key: pyproject.toml
+        continue-on-error: true
+      - name: Assert action failed as expected
+        run: |
+          if [ "${{ steps.mypycify.outcome }}" = "failure" ]; then
+            echo "Action failed as expected."
+            exit 0
+          else
+            echo "Action did not fail as expected."
+            exit 1
+          fi
 
   test-normalize-without-push:
     name: normalize-source true without push-source true
     runs-on: ubuntu-latest
-    continue-on-error: false
     steps:
       - uses: actions/checkout@v4
       - name: Set up minimal Python project
@@ -229,17 +258,27 @@ jobs:
           mkdir dummy
           echo '' > dummy/__init__.py
       - name: Run mypycify action (normalize-source true, push-source false)
+        id: mypycify
         uses: ./
         with:
           python-version: '3.11'
           hash-key: pyproject.toml
           normalize-source: true
           push-source: false
+        continue-on-error: true
+      - name: Assert action failed as expected
+        run: |
+          if [ "${{ steps.mypycify.outcome }}" = "failure" ]; then
+            echo "Action failed as expected."
+            exit 0
+          else
+            echo "Action did not fail as expected."
+            exit 1
+          fi
 
   test-push-source-missing-triggers:
     name: push-source true with no trigger-pr-number or trigger-branch-name
     runs-on: ubuntu-latest
-    continue-on-error: false
     steps:
       - uses: actions/checkout@v4
       - name: Set up minimal Python project
@@ -251,8 +290,19 @@ jobs:
           mkdir dummy
           echo '' > dummy/__init__.py
       - name: Run mypycify action (push-source true, missing triggers)
+        id: mypycify
         uses: ./
         with:
           python-version: '3.11'
           hash-key: pyproject.toml
           push-source: true
+        continue-on-error: true
+      - name: Assert action failed as expected
+        run: |
+          if [ "${{ steps.mypycify.outcome }}" = "failure" ]; then
+            echo "Action failed as expected."
+            exit 0
+          else
+            echo "Action did not fail as expected."
+            exit 1
+          fi
