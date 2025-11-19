@@ -346,7 +346,7 @@ runs:
       if: inputs.push-source == 'true'
       uses: BobTheBuidler/poosh@v0.0.2
       with:
-        branch: auto/update-mypycify
+        branch: mypycify/${{ inputs.trigger-branch-name }}
         trigger-pr-number: ${{ inputs.trigger-pr-number }}
         trigger-branch-name: ${{ inputs.trigger-branch-name }}
         pr-body: |
