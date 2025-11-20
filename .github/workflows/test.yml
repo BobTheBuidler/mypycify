@@ -13,7 +13,7 @@ jobs:
     name: Build (no ccache)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
@@ -38,7 +38,7 @@ jobs:
     name: Build from source (no ccache)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
@@ -64,7 +64,7 @@ jobs:
     name: Build from sdist (no ccache)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
@@ -90,7 +90,7 @@ jobs:
     name: Build (with ccache)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
@@ -115,7 +115,7 @@ jobs:
     name: Build from source (with ccache)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
@@ -141,7 +141,7 @@ jobs:
     name: Build from sdist (with ccache)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
@@ -167,7 +167,7 @@ jobs:
     name: Invalid build-from value
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
@@ -198,7 +198,7 @@ jobs:
     name: Invalid ccache value
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
@@ -229,7 +229,7 @@ jobs:
     name: Missing python-version
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
@@ -258,7 +258,7 @@ jobs:
     name: normalize-source true without push-source true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
@@ -290,7 +290,7 @@ jobs:
     name: push-source true with no trigger-pr-number or trigger-branch-name
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up minimal Python project
         run: |
           echo '[build-system]' > pyproject.toml
