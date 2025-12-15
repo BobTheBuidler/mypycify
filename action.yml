@@ -122,7 +122,7 @@ runs:
 
     - name: Cache built wheel (dist/)
       id: wheel-cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: dist/
         key: ${{ steps.artifact_key.outputs.artifact-key }}
@@ -162,7 +162,7 @@ runs:
     - name: Restore mypy cache
       id: mypy_cache_restore
       if: steps.wheel-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: .mypy_cache
         key: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}
@@ -189,7 +189,7 @@ runs:
 
     - name: Restore ccache cache
       if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: ${{ env.CCACHE_DIR }}
         key: ${{ steps.ccache_key.outputs.ccache-key }}
@@ -279,14 +279,14 @@ runs:
 
     - name: Save ccache cache
       if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         path: ${{ env.CCACHE_DIR }}
         key: ${{ steps.ccache_key.outputs.ccache-key }}
 
     - name: Save mypy cache
       id: mypy_cache_save
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         path: .mypy_cache
         key: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}
