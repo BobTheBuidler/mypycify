@@ -295,7 +295,7 @@ runs:
       id: artifact_name
       shell: bash
       run: |
-        ARTIFACT_NAME="BobTheBuidler_mypycified_wheel-${{ steps.artifact_key.outputs.artifact-key }}-${{ inputs.build-from }}"
+        ARTIFACT_NAME="BobTheBuidler_mypycified_wheel-${{ steps.artifact_key.outputs.artifact-key }}"
         echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
     - name: Upload wheel artifact
