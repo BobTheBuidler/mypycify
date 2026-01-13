@@ -296,9 +296,6 @@ runs:
       shell: bash
       run: |
         ARCH="$(uname -m)"
-        if [[ -z "$ARCH" ]]; then
-          ARCH="unknown-arch"
-        fi
         ARTIFACT_NAME="BobTheBuidler_mypycified_wheel-${{ steps.artifact_key.outputs.artifact-key }}-${ARCH}-${{ inputs.build-from }}"
         echo "artifact-name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
