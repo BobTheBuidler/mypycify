@@ -109,7 +109,8 @@ runs:
       id: artifact_key
       shell: bash
       run: |
-        ARTIFACT_KEY="${{ runner.os }}-py${{ inputs.python-version }}-${{ inputs.build-from }}-${{ steps.hash_key.outputs.hash-key }}"
+        ARCHITECTURE="$(uname -m)"
+        ARTIFACT_KEY="${{ runner.os }}-${ARCHITECTURE}-py${{ inputs.python-version }}-${{ inputs.build-from }}-${{ steps.hash_key.outputs.hash-key }}"
         echo "artifact-key=$ARTIFACT_KEY" >> $GITHUB_OUTPUT
 
     - name: Mutex on artifact key
