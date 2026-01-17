@@ -345,7 +345,7 @@ runs:
 
     - name: Poosh Source
       if: inputs.push-source == 'true'
-      uses: BobTheBuidler/poosh@v0.0.9
+      uses: BobTheBuidler/poosh@v0.0.10
       with:
         trigger-pr-number: ${{ inputs.trigger-pr-number }}
         trigger-branch: ${{ inputs.trigger-branch-name }}
