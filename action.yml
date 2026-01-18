@@ -285,7 +285,9 @@ runs:
         path: ${{ env.CCACHE_DIR }}
         key: ${{ steps.ccache_key.outputs.ccache-key }}
 
+    # Avoid no-op writes when the wheel is cached or the mypy cache was restored.
     - name: Save mypy cache
+      if: steps.wheel-cache.outputs.cache-hit != 'true' && steps.mypy_cache_restore.outputs.cache-hit != 'true'
       id: mypy_cache_save
       uses: actions/cache/save@v5
       with:
