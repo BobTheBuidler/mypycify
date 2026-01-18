@@ -209,8 +209,10 @@ runs:
       run: brew install ccache
       shell: bash
 
+    # Keep restore status for deciding whether saving is needed.
     - name: Restore ccache cache
       if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel_cache_status.outputs.cache-hit != 'true'
+      id: ccache_restore
       uses: actions/cache/restore@v5
       with:
         path: ${{ env.CCACHE_DIR }}
@@ -300,7 +302,8 @@ runs:
       shell: bash
 
     - name: Save ccache cache
-      if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel_cache_status.outputs.cache-hit != 'true'
+      # Skip saving when restore already hit to avoid redundant writes.
+      if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel_cache_status.outputs.cache-hit != 'true' && steps.ccache_restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@v5
       with:
         path: ${{ env.CCACHE_DIR }}
