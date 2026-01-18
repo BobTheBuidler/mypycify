@@ -8,5 +8,6 @@ All agents must follow these rules:
    - Support titles: `fix(docs):`, `fix(benchmarks):`, `fix(cicd):`
 3) Commit messages must follow the same Conventional Commits-style prefixes and include a short functional description plus a user-facing value proposition.
 4) PR descriptions must include Summary, Rationale, and Details sections.
+5) The mypy configuration should go in pyproject.toml.
 
 Reference: https://www.conventionalcommits.org/en/v1.0.0/
