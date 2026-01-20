@@ -1,318 +1,61 @@
-name: Test mypycify Action
+name: tests
 
 on:
+  push:
+    paths:
+      - '**/*.py'
+      - '**/*.pyi'
+      - 'pyproject.toml'
+      - 'mypy.ini'
+      - 'setup.cfg'
+      - 'setup.py'
+      - 'requirements*.txt'
+      - 'tox.ini'
+      - 'poetry.lock'
+      - '.pre-commit-config.yaml'
+      - 'tests/**'
+      - 'pytest.ini'
+      - '.github/workflows/test.yml'
   pull_request:
-  workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    paths:
+      - '**/*.py'
+      - '**/*.pyi'
+      - 'pyproject.toml'
+      - 'mypy.ini'
+      - 'setup.cfg'
+      - 'setup.py'
+      - 'requirements*.txt'
+      - 'tox.ini'
+      - 'poetry.lock'
+      - '.pre-commit-config.yaml'
+      - 'tests/**'
+      - 'pytest.ini'
+      - '.github/workflows/test.yml'
 
 jobs:
-  test-default:
-    name: Build (no ccache)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
-        run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (source, no ccache)
-        uses: ./
-        with:
-          python-version: '3.11'
-          pip-cache-dependency-path: pyproject.toml
-          ccache: 'false'
-          hash-key: pyproject.toml
-      - name: Check for built wheel
-        run: |
-          ls dist/
-          test -f dist/dummy-0.1-py3-none-any.whl
-      
-  test-source:
-    name: Build from source (no ccache)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
-        run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (source, no ccache)
-        uses: ./
-        with:
-          python-version: '3.11'
-          pip-cache-dependency-path: pyproject.toml
-          build-from: source
-          ccache: 'false'
-          hash-key: pyproject.toml
-      - name: Check for built wheel
-        run: |
-          ls dist/
-          test -f dist/dummy-0.1-py3-none-any.whl
+  tests:
+    name: Python ${{ matrix.python }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
+        python: ['3.11', '3.12', '3.13']
 
-  test-sdist:
-    name: Build from sdist (no ccache)
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
-        run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (sdist, no ccache)
-        uses: ./
-        with:
-          python-version: '3.11'
-          pip-cache-dependency-path: pyproject.toml
-          build-from: sdist
-          ccache: 'false'
-          hash-key: pyproject.toml
-      - name: Check for built wheel
-        run: |
-          ls dist/
-          test -f dist/dummy-0.1-py3-none-any.whl
+      - name: Check out
+        uses: actions/checkout@v4
 
-  test-default-ccache:
-    name: Build (with ccache)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
-        run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (source, with ccache)
-        uses: ./
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          pip-cache-dependency-path: pyproject.toml
-          ccache: 'true'
-          hash-key: pyproject.toml
-      - name: Check for built wheel
-        run: |
-          ls dist/
-          test -f dist/dummy-0.1-py3-none-any.whl
+          python-version: ${{ matrix.python }}
 
-  test-source-ccache:
-    name: Build from source (with ccache)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
+      - name: Install dependencies
         run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (source, with ccache)
-        uses: ./
-        with:
-          python-version: '3.11'
-          pip-cache-dependency-path: pyproject.toml
-          build-from: source
-          ccache: 'true'
-          hash-key: pyproject.toml
-      - name: Check for built wheel
-        run: |
-          ls dist/
-          test -f dist/dummy-0.1-py3-none-any.whl
+          pip install --upgrade pip
+          pip install .[test]
 
-  test-sdist-ccache:
-    name: Build from sdist (with ccache)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
+      - name: Run tests
         run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (sdist, with ccache)
-        uses: ./
-        with:
-          python-version: '3.11'
-          pip-cache-dependency-path: pyproject.toml
-          build-from: sdist
-          ccache: 'true'
-          hash-key: pyproject.toml
-      - name: Check for built wheel
-        run: |
-          ls dist/
-          test -f dist/dummy-0.1-py3-none-any.whl
-
-  test-invalid-build-from:
-    name: Invalid build-from value
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
-        run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (invalid build-from)
-        id: mypycify
-        uses: ./
-        with:
-          python-version: '3.11'
-          hash-key: pyproject.toml
-          build-from: foo
-        continue-on-error: true
-      - name: Assert action failed as expected
-        run: |
-          if [ "${{ steps.mypycify.outcome }}" = "failure" ]; then
-            echo "Action failed as expected."
-            exit 0
-          else
-            echo "Action did not fail as expected."
-            exit 1
-          fi
-
-  test-invalid-ccache:
-    name: Invalid ccache value
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
-        run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (invalid ccache)
-        id: mypycify
-        uses: ./
-        with:
-          python-version: '3.11'
-          hash-key: pyproject.toml
-          ccache: maybe
-        continue-on-error: true
-      - name: Assert action failed as expected
-        run: |
-          if [ "${{ steps.mypycify.outcome }}" = "failure" ]; then
-            echo "Action failed as expected."
-            exit 0
-          else
-            echo "Action did not fail as expected."
-            exit 1
-          fi
-
-  test-missing-python-version:
-    name: Missing python-version
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
-        run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (missing python-version)
-        id: mypycify
-        uses: ./
-        with:
-          hash-key: pyproject.toml
-        continue-on-error: true
-      - name: Assert action failed as expected
-        run: |
-          if [ "${{ steps.mypycify.outcome }}" = "failure" ]; then
-            echo "Action failed as expected."
-            exit 0
-          else
-            echo "Action did not fail as expected."
-            exit 1
-          fi
-
-  test-normalize-without-push:
-    name: normalize-source true without push-source true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
-        run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (normalize-source true, push-source false)
-        id: mypycify
-        uses: ./
-        with:
-          python-version: '3.11'
-          hash-key: pyproject.toml
-          normalize-source: true
-          push-source: false
-        continue-on-error: true
-      - name: Assert action failed as expected
-        run: |
-          if [ "${{ steps.mypycify.outcome }}" = "failure" ]; then
-            echo "Action failed as expected."
-            exit 0
-          else
-            echo "Action did not fail as expected."
-            exit 1
-          fi
-
-  test-push-source-missing-triggers:
-    name: push-source true with no trigger-pr-number or trigger-branch-name
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Set up minimal Python project
-        run: |
-          echo '[build-system]' > pyproject.toml
-          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
-          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
-          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
-          mkdir dummy
-          echo '' > dummy/__init__.py
-      - name: Run mypycify action (push-source true, missing triggers)
-        id: mypycify
-        uses: ./
-        with:
-          python-version: '3.11'
-          hash-key: pyproject.toml
-          push-source: true
-        continue-on-error: true
-      - name: Assert action failed as expected
-        run: |
-          if [ "${{ steps.mypycify.outcome }}" = "failure" ]; then
-            echo "Action failed as expected."
-            exit 0
-          else
-            echo "Action did not fail as expected."
-            exit 1
-          fi
+          pytest -q --durations=5 --cov=mypycify
