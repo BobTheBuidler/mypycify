@@ -327,7 +327,7 @@ runs:
 
     - name: Upload wheel artifact
       id: upload_artifact
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.artifact_name.outputs.artifact-name }}
         path: dist/*.whl
@@ -340,7 +340,7 @@ runs:
 
     - name: Download wheel artifact
       if: steps.upload_artifact.outcome == 'failure'
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: ${{ steps.artifact_name.outputs.artifact-name }}
         path: dist
