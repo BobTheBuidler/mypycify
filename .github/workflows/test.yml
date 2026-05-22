@@ -316,3 +316,28 @@ jobs:
             echo "Action did not fail as expected."
             exit 1
           fi
+
+  test-poosh-passthrough:
+    name: Poosh publish controls are passed through
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Assert poosh wiring
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          action = Path("action.yml").read_text()
+          expr = lambda value: "${" + "{ " + value + " }}"
+          pr_branch_expr = "inputs.pr-branch || format('mypycify/{0}', inputs.trigger-branch-name)"
+          expected = [
+              "uses: BobTheBuidler/poosh@v0.1.0",
+              f"direct-push: {expr('inputs.direct-push')}",
+              f"pr-branch: {expr(pr_branch_expr)}",
+              f"pr-base: {expr('inputs.pr-base')}",
+              f"pr-branch-strategy: {expr('inputs.pr-branch-strategy')}",
+          ]
+          missing = [value for value in expected if value not in action]
+          if missing:
+              raise SystemExit(f"missing poosh passthrough values: {missing!r}")
+          PY
