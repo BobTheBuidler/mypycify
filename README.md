@@ -33,6 +33,10 @@ Add this step to your workflow:
     # pip-cache-dependency-path: requirements.txt
     # ccache: false  # Set to true to enable ccache for C/C++ compilation
     # push-source: false  # Set to true to enable commit/PR automation
+    # direct-push: true  # Set to false on protected branches to skip doomed direct pushes
+    # pr-branch: mypycify/${{ github.head_ref || github.ref_name }}
+    # pr-base: ${{ github.head_ref || github.ref_name }}
+    # pr-branch-strategy: update  # update, unique, or fail
     # commit-message: "chore: update build artifacts"
     # normalize-source: false  # Set to true to normalize C files for diffchecking
     # build-command: "make mypyc"  # Use a custom build command instead of the default
@@ -60,6 +64,10 @@ Add this step to your workflow:
 | pip-cache-dependency-path | Dependency files for actions/setup-python pip cache                 | No       | ""      |
 | ccache            | Enable ccache for C/C++ compilation (Linux/macOS only). See tip above.      | No       | false   |
 | push-source       | Enable auto-commit and push or PR of changes if build output changes.       | No       | false   |
+| direct-push       | When `push-source` is true, whether to let Poosh try a direct push before falling back to a PR branch. | No | true |
+| pr-branch         | When `push-source` is true, the PR branch Poosh should create or update. Defaults to `mypycify/{trigger-branch-name}`. | No | "" |
+| pr-base           | When `push-source` is true, the generated PR base branch. Defaults to Poosh's trigger branch. | No | "" |
+| pr-branch-strategy | When `push-source` is true, how Poosh handles an existing PR branch: `update`, `unique`, or `fail`. | No | update |
 | commit-message    | Commit message to use when committing changes.                              | No       | "chore: compile C files for source control" |
 | normalize-source  | Enable normalization of C files for diffchecking.                           | No       | false   |
 | trigger-pr-number | PR number of the triggering PR (e.g., 1234). If set, the PR body will include 'Triggered by #<number>'. | No | "" |
@@ -136,6 +144,27 @@ If `push-source: true` is set and changes are detected after the build (and opti
 - **Open a Pull Request** with the changes if running in a fork, on a PR, or if direct commit is not possible.
 - Before attempting to commit or open a PR, mypycify checks if the branch still exists on the remote. If the branch has been deleted (for example, if a pull request was closed or the branch was force-pushed or deleted), the action will print a message and exit gracefully without error.
 
+`mypycify` delegates the publish step to [`poosh`](https://github.com/BobTheBuidler/poosh). It does not implement branch collision handling itself. By default, generated source PRs use `pr-branch-strategy: update`, so repeated generated-source runs update one stable branch such as `mypycify/master` with `--force-with-lease` instead of creating endless suffixed branches or failing because the branch already exists.
+
+For protected branches, set `direct-push: false` and an explicit `pr-branch` / `pr-base` pair:
+
+```yaml
+- uses: BobTheBuidler/mypycify@v0.4.0
+  with:
+    python-version: '3.13'
+    hash-key: |
+      **/*.py
+      pyproject.toml
+      setup.py
+    push-source: true
+    normalize-source: true
+    direct-push: false
+    pr-branch: mypycify/${{ github.head_ref || github.ref_name }}
+    pr-base: ${{ github.head_ref || github.ref_name }}
+    pr-branch-strategy: update
+    trigger-branch-name: ${{ github.head_ref || github.ref_name }}
+```
+
 If `normalize-source: true` is set, normalization of C files for diffchecking will be performed before the commit/PR step.  
 **Note:** `normalize-source: true` requires `push-source: true`.
 
@@ -153,7 +182,8 @@ This action performs comprehensive input validation and will fail early with a c
 
 - **Allowed values:**  
   - `build-from`: must be "source" or "sdist".
-  - `ccache`, `push-source`, `normalize-source`: must be "true" or "false".
+  - `ccache`, `push-source`, `direct-push`, `normalize-source`: must be "true" or "false".
+  - `pr-branch-strategy`: must be "update", "unique", or "fail".
 
 - **Combinations:**  
   - If `normalize-source: true`, then `push-source` must also be "true".
@@ -168,6 +198,8 @@ This action performs comprehensive input validation and will fail early with a c
 
 - `ERROR: build-from must be 'source' or 'sdist'. Got 'foo'.`
 - `ERROR: ccache must be 'true' or 'false'. Got 'maybe'.`
+- `ERROR: direct-push must be 'true' or 'false'. Got 'maybe'.`
+- `ERROR: pr-branch-strategy must be one of: update, unique, fail. Got 'append'.`
 - `ERROR: python-version is required.`
 - `ERROR: normalize-source cannot be true unless push-source is also true.`
 - `ERROR: push-source is true, but neither trigger-pr-number nor trigger-branch-name is set. At least one is required for PR/commit automation.`
