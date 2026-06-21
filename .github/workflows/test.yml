@@ -163,6 +163,44 @@ jobs:
           ls dist/
           test -f dist/dummy-0.1-py3-none-any.whl
 
+  test-pip-http-cache-cleanup:
+    name: Pip HTTP cache is cleaned
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up minimal Python project
+        run: |
+          echo '[build-system]' > pyproject.toml
+          echo 'requires = ["setuptools", "wheel"]' >> pyproject.toml
+          echo 'build-backend = "setuptools.build_meta"' >> pyproject.toml
+          echo 'from setuptools import setup; setup(name="dummy", version="0.1")' > setup.py
+          mkdir dummy
+          echo '' > dummy/__init__.py
+          printf '%s\n' "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" > cache-key.txt
+      - name: Seed pip HTTP cache directories
+        run: |
+          cache_dir="$(python3 -m pip cache dir)"
+          mkdir -p "$cache_dir/http" "$cache_dir/http-v2"
+          echo sentinel > "$cache_dir/http/sentinel"
+          echo sentinel > "$cache_dir/http-v2/sentinel"
+          echo "PIP_CACHE_DIR=$cache_dir" >> "$GITHUB_ENV"
+      - name: Run mypycify action (source, no ccache)
+        uses: ./
+        with:
+          python-version: '3.11'
+          pip-cache-dependency-path: pyproject.toml
+          ccache: 'false'
+          hash-key: cache-key.txt
+      - name: Assert pip HTTP cache directories were cleaned
+        run: |
+          cache_dir="$(python -m pip cache dir)"
+          test "$cache_dir" = "$PIP_CACHE_DIR"
+          if [ -d "$cache_dir/http" ] || [ -d "$cache_dir/http-v2" ]; then
+            echo "pip HTTP cache directories were not cleaned:"
+            find "$cache_dir" -maxdepth 2 -type d -name 'http*' -print
+            exit 1
+          fi
+
   test-invalid-build-from:
     name: Invalid build-from value
     runs-on: ubuntu-latest
