@@ -9,6 +9,10 @@ inputs:
   python-version:
     description: "Python version to use (passed to actions/setup-python)"
     required: true
+  python-architecture:
+    description: "Optional Python architecture passed to actions/setup-python, e.g. x86, x64, arm64. Empty preserves host/default behavior."
+    required: false
+    default: ""
   pip-cache-dependency-path:
     description: "Dependency files for actions/setup-python pip cache. This input is passed directly to the 'cache-dependency-path' parameter of actions/setup-python."
     required: false
@@ -64,6 +68,7 @@ inputs:
 outputs:
   artifact-name:
     description: "The name of the uploaded wheel artifact."
+    value: ${{ steps.artifact_name.outputs.artifact-name }}
 runs:
   using: "composite"
   steps:
@@ -73,6 +78,10 @@ runs:
         # Validate required inputs
         if [[ -z "${{ inputs.python-version }}" ]]; then
           echo "ERROR: python-version is required."
+          exit 1
+        fi
+        if [[ -n "${{ inputs.python-architecture }}" && "${{ inputs.python-architecture }}" != "x86" && "${{ inputs.python-architecture }}" != "x64" && "${{ inputs.python-architecture }}" != "arm64" ]]; then
+          echo "ERROR: python-architecture must be one of: x86, x64, arm64. Got '${{ inputs.python-architecture }}'."
           exit 1
         fi
         if [[ -z "${{ inputs.hash-key }}" ]]; then
@@ -135,7 +144,11 @@ runs:
       id: artifact_key
       shell: bash
       run: |
-        ARCHITECTURE="$(uname -m)"
+        if [[ -n "${{ inputs.python-architecture }}" ]]; then
+          ARCHITECTURE="${{ inputs.python-architecture }}"
+        else
+          ARCHITECTURE="$(uname -m)"
+        fi
         ARTIFACT_KEY="${{ runner.os }}-${ARCHITECTURE}-py${{ inputs.python-version }}-${{ inputs.build-from }}-${{ steps.hash_key.outputs.hash-key }}"
         echo "artifact-key=$ARTIFACT_KEY" >> $GITHUB_OUTPUT
 
@@ -176,10 +189,19 @@ runs:
         fi
 
     - name: Set up Python
-      if: steps.wheel_cache_status.outputs.cache-hit != 'true'
+      if: steps.wheel_cache_status.outputs.cache-hit != 'true' && inputs.python-architecture == ''
       uses: actions/setup-python@v6
       with:
         python-version: ${{ inputs.python-version }}
+        cache: pip
+        cache-dependency-path: ${{ inputs.pip-cache-dependency-path }}
+
+    - name: Set up Python with requested architecture
+      if: steps.wheel_cache_status.outputs.cache-hit != 'true' && inputs.python-architecture != ''
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+        architecture: ${{ inputs.python-architecture }}
         cache: pip
         cache-dependency-path: ${{ inputs.pip-cache-dependency-path }}
 
@@ -197,7 +219,12 @@ runs:
       id: ccache_restore_key
       shell: bash
       run: |
-        RESTORE_KEY="BobTheBuidler/mypycify:ccache-data-${{ runner.os }}-${{ inputs.python-version }}-${{ inputs.build-from }}"
+        if [[ -n "${{ inputs.python-architecture }}" ]]; then
+          ARCHITECTURE_PART="-${{ inputs.python-architecture }}"
+        else
+          ARCHITECTURE_PART=""
+        fi
+        RESTORE_KEY="BobTheBuidler/mypycify:ccache-data-${{ runner.os }}-${{ inputs.python-version }}${ARCHITECTURE_PART}-${{ inputs.build-from }}"
         echo "restore-key=$RESTORE_KEY" >> $GITHUB_OUTPUT
 
     - name: Compute ccache key
@@ -213,7 +240,12 @@ runs:
       if: steps.wheel_cache_status.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        MYPY_CACHE_PREFIX="BobTheBuidler/mypycify:mypy_cache-${{ runner.os }}-py${{ inputs.python-version }}-${{ inputs.build-from }}"
+        if [[ -n "${{ inputs.python-architecture }}" ]]; then
+          ARCHITECTURE_PART="-${{ inputs.python-architecture }}"
+        else
+          ARCHITECTURE_PART=""
+        fi
+        MYPY_CACHE_PREFIX="BobTheBuidler/mypycify:mypy_cache-${{ runner.os }}-py${{ inputs.python-version }}${ARCHITECTURE_PART}-${{ inputs.build-from }}"
         echo "restore-key=$MYPY_CACHE_PREFIX" >> $GITHUB_OUTPUT
 
     - name: Restore mypy cache
