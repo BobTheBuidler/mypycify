@@ -30,6 +30,7 @@ Add this step to your workflow:
       **/*.h
     # Optional:
     build-from: source  # or 'sdist' to build from the sdist (see below)
+    # python-architecture: x86  # Optional: x86, x64, or arm64; empty keeps host/default behavior
     # pip-cache-dependency-path: requirements.txt
     # ccache: false  # Set to true to enable ccache for C/C++ compilation
     # push-source: false  # Set to true to enable commit/PR automation
@@ -60,6 +61,7 @@ Add this step to your workflow:
 | Name              | Description                                                                 | Required | Default |
 |-------------------|-----------------------------------------------------------------------------|----------|---------|
 | python-version    | Python version to use (passed to actions/setup-python)                      | Yes      |         |
+| python-architecture | Optional Python architecture passed to actions/setup-python. Allowed values: `x86`, `x64`, `arm64`. Empty preserves host/default behavior and existing cache/artifact IDs. | No | "" |
 | hash-key          | File globs (multiline string, one per line) to include in the hash key for caching. | Yes      |         |
 | pip-cache-dependency-path | Dependency files for actions/setup-python pip cache                 | No       | ""      |
 | ccache            | Enable ccache for C/C++ compilation (Linux/macOS only). See tip above.      | No       | false   |
@@ -86,6 +88,24 @@ Add this step to your workflow:
   Use this mode to catch packaging issues (e.g., missing files in MANIFEST.in) and to ensure reproducibility of your published artifacts.
 
 **All other user inputs (e.g., build-command, ccache, pip-cache-dependency-path, etc.) are honored in both modes.**
+
+## Python Architecture
+
+By default, mypycify preserves its legacy behavior and lets `actions/setup-python` choose the host/default architecture. In that mode, wheel artifact keys continue to use `uname -m`, so existing callers keep the same cache and artifact IDs.
+
+Set `python-architecture` when the wheel must be built with a specific Python architecture:
+
+```yaml
+- uses: BobTheBuidler/mypycify@v0.5.0
+  with:
+    python-version: '3.12'
+    python-architecture: x86
+    hash-key: |
+      pyproject.toml
+      my_lib/**/*.py
+```
+
+When `python-architecture` is set, mypycify passes it to `actions/setup-python` and includes the selected value in architecture-sensitive cache and artifact IDs.
 
 ### Example: Build from sdist
 
@@ -182,6 +202,7 @@ This action performs comprehensive input validation and will fail early with a c
 
 - **Allowed values:**  
   - `build-from`: must be "source" or "sdist".
+  - `python-architecture`: if set, must be "x86", "x64", or "arm64".
   - `ccache`, `push-source`, `direct-push`, `normalize-source`: must be "true" or "false".
   - `pr-branch-strategy`: must be "update", "unique", or "fail".
 
@@ -197,6 +218,7 @@ This action performs comprehensive input validation and will fail early with a c
 ### Example Error Messages
 
 - `ERROR: build-from must be 'source' or 'sdist'. Got 'foo'.`
+- `ERROR: python-architecture must be one of: x86, x64, arm64. Got 'ppc64'.`
 - `ERROR: ccache must be 'true' or 'false'. Got 'maybe'.`
 - `ERROR: direct-push must be 'true' or 'false'. Got 'maybe'.`
 - `ERROR: pr-branch-strategy must be one of: update, unique, fail. Got 'append'.`
