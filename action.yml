@@ -154,7 +154,7 @@ runs:
 
     - name: Cache built wheel (dist/)
       id: wheel-cache
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: dist/
         key: ${{ steps.artifact_key.outputs.artifact-key }}
@@ -173,7 +173,7 @@ runs:
     - name: Re-check wheel cache under lock
       id: wheel-cache-recheck
       if: steps.wheel-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: dist/
         key: ${{ steps.artifact_key.outputs.artifact-key }}
@@ -251,7 +251,7 @@ runs:
     - name: Restore mypy cache
       id: mypy_cache_restore
       if: steps.wheel_cache_status.outputs.cache-hit != 'true'
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: .mypy_cache
         key: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}
@@ -280,7 +280,7 @@ runs:
     - name: Restore ccache cache
       if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel_cache_status.outputs.cache-hit != 'true'
       id: ccache_restore
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@v6
       with:
         path: ${{ env.CCACHE_DIR }}
         key: ${{ steps.ccache_key.outputs.ccache-key }}
@@ -371,7 +371,7 @@ runs:
     - name: Save ccache cache
       # Skip saving when restore already hit to avoid redundant writes.
       if: inputs.ccache == 'true' && runner.os != 'Windows' && steps.wheel_cache_status.outputs.cache-hit != 'true' && steps.ccache_restore.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: ${{ env.CCACHE_DIR }}
         key: ${{ steps.ccache_key.outputs.ccache-key }}
@@ -380,7 +380,7 @@ runs:
     - name: Save mypy cache
       if: steps.wheel-cache.outputs.cache-hit != 'true' && steps.mypy_cache_restore.outputs.cache-hit != 'true'
       id: mypy_cache_save
-      uses: actions/cache/save@v5
+      uses: actions/cache/save@v6
       with:
         path: .mypy_cache
         key: ${{ steps.mypy_cache_restore_key.outputs.restore-key }}-${{ steps.hash_key.outputs.hash-key }}
